@@ -11,7 +11,9 @@ This repository contains the stable pipeline for reproducing the **Lottery Ticke
    .\venv\Scripts\activate```
 
 2. **Install Dependencies**:
-    ```pip install torch torchvision  ```
+    ```powershell
+   pip install torch torchvision  ```
 
-3. **Run the experiment**
-    ```python main.py```
+4. **Run the experiment**
+    ```powershell
+   python main.py```
