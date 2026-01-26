@@ -12,7 +12,7 @@ This repository contains the stable pipeline for reproducing the **Lottery Ticke
 
 2. **Install Dependencies**:
     ```powershell
-   pip install torch torchvision
+   pip install -r requirements.txt
 
 4. **Run the experiment**
     ```powershell
