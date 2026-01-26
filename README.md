@@ -14,4 +14,4 @@ This repository contains the stable pipeline for reproducing the **Lottery Ticke
     ```pip install torch torchvision  ```
 
 3. **Run the experiment**
-    ``python main.py```
+    ```python main.py```
