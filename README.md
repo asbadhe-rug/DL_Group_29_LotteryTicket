@@ -8,10 +8,10 @@ This repository contains the stable pipeline for reproducing the **Lottery Ticke
 1. **Create and Activate Virtual Environment**:
    ```powershell
    python -m venv venv
-   .\venv\Scripts\activate
+   .\venv\Scripts\activate```
 
 2. **Install Dependencies**:
-    ```pip install torch torchvision
+    ```pip install torch torchvision  ```
 
 3. **Run the experiment**
-    ``python main.py
+    ``python main.py```
