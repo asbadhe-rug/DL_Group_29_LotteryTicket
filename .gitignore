@@ -1,0 +1,6 @@
+data/
+venv/
+__pycache__/
+results/
+*.tar.gz
+*.pth
