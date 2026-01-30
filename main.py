@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import copy
-from models import Conv2
+from models import Conv2, Conv4, Conv6
 from utils import get_loaders
 from pruning import get_mask, apply_mask
 from train import train, evaluate
@@ -26,7 +26,7 @@ ITERATIONS = 5    # How many times to prune and retrain
 train_loader, val_loader, test_loader = get_loaders(BATCH_SIZE)
 
 # 1. Initialize and save the "Ticket" (theta_0)
-model = Conv2().to(device)
+model = Conv4().to(device)
 initial_state_dict = copy.deepcopy(model.state_dict())
 
 # Current mask (initially all ones - no pruning)

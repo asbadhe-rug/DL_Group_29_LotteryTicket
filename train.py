@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-def train(model, train_loader, optimizer, criterion, device, mask=None):
+from pruning import apply_mask
+
+def train(model, train_loader, optimizer, criterion, device, mask):
     model.train()
     running_loss = 0.0
     for inputs, labels in train_loader:
@@ -12,17 +14,20 @@ def train(model, train_loader, optimizer, criterion, device, mask=None):
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
-        
-        # IMPORTANT: If we have a mask, we must zero out the gradients 
-        # for pruned weights so they never update during training.
-        if mask is not None:
-            for name, param in model.named_parameters():
-                if name in mask:
-                    param.grad.data.mul_(mask[name])
+
+        # --- THIS IS THE PAPER-STRICT PART ---
+        # 1. Zero out gradients for pruned weights so they don't update
+        for name, param in model.named_parameters():
+            if name in mask:
+                param.grad.data.mul_(mask[name])
         
         optimizer.step()
+        
+        # 2. Safety check: ensure weights are still exactly zero
+        # (Numerical errors in optimizers can sometimes create tiny values)
+        apply_mask(model, mask)
+        
         running_loss += loss.item()
-    
     return running_loss / len(train_loader)
 
 def evaluate(model, loader, criterion, device, mask=None):
