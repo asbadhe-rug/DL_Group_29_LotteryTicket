@@ -72,8 +72,15 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
                 best_acc = val_acc
             
         # Calculate current sparsity stats
-        remaining_percent = (0.8) ** round_idx
-        sparsity = (1 - remaining_percent) * 100
+        total_weights = 0
+        remaining_weights = 0
+        for name, param in model.named_parameters():
+            if 'weight' in name:
+                total_weights += param.numel()
+                remaining_weights += torch.count_nonzero(param.data).item()
+        
+        remaining_percent = (remaining_weights / total_weights) * 100
+        sparsity = 100 - remaining_percent
         
         print(f"-> Result: Sparsity {sparsity:.1f}% | Best Val Acc: {best_acc:.2f}%")
         
@@ -83,7 +90,7 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
             "type": experiment_type,
             "round": round_idx,
             "sparsity": sparsity,
-            "remaining_percent": remaining_percent * 100,
+            "remaining_percent": remaining_percent, # This is now the true measured %
             "test_accuracy": best_acc,
             "early_stop_epoch": early_stop_epoch
         })
@@ -98,7 +105,7 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
               f"Estimated model completion at: {eta_time.strftime('%H:%M:%S')}")
 
         # 4. Pruning Step: Create mask for NEXT round (iterative pruning)
-        mask = get_mask(model, 1 - (0.8)**(round_idx + 1))
+        mask = get_mask(model, conv_rate=0.1, fc_rate=0.2)
 
     return results
 
@@ -125,5 +132,5 @@ if __name__ == "__main__":
 
     # Final Save
     final_df = pd.DataFrame(all_data)
-    final_df.to_csv("final_lottery_ticket_results.csv", index=False)
-    print("\n✅ All experiments finished. Data saved to final_lottery_ticket_results.csv")
+    final_df.to_csv("final_lottery_ticket_results_layer-wise_pruning.csv", index=False)
+    print("\n✅ All experiments finished. Data saved to final_lottery_ticket_results_layer-wise_pruning.csv")
