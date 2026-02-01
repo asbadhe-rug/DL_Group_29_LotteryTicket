@@ -58,20 +58,28 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
         early_stop_epoch = epochs
         
         # 3. Training Loop
-        print(f"\n>>> Running: {model_name} | {experiment_type} | Round {round_idx} (Target: {epochs} Epochs)")
+        print(f"\n>>> Running: {model_name} | {experiment_type} | Round {round_idx}")
         
+        round_results = []
         for epoch in range(1, epochs + 1):
             train_loss = train(model, train_loader, optimizer, criterion, device, mask)
-            _, val_acc = evaluate(model, val_loader, criterion, device)
+            val_loss, val_acc = evaluate(model, val_loader, criterion, device)
             
-            # Simple early stop tracking: iteration where it crosses a performance bar
+            # Track early stopping (Paper uses "minimum validation loss" or "early stop epoch")
             if val_acc > 75.0 and early_stop_epoch == epochs:
                 early_stop_epoch = epoch
                 
             if val_acc > best_acc:
                 best_acc = val_acc
             
-        # Calculate current sparsity stats
+            round_results.append({
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "val_acc": val_acc
+            })
+
+        # Calculate final stats for this round
         total_weights = 0
         remaining_weights = 0
         for name, param in model.named_parameters():
@@ -80,19 +88,16 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
                 remaining_weights += torch.count_nonzero(param.data).item()
         
         remaining_percent = (remaining_weights / total_weights) * 100
-        sparsity = 100 - remaining_percent
-        
-        print(f"-> Result: Sparsity {sparsity:.1f}% | Best Val Acc: {best_acc:.2f}%")
         
         results.append({
             "model": model_name,
-            "dropout": use_dropout,
             "type": experiment_type,
             "round": round_idx,
-            "sparsity": sparsity,
-            "remaining_percent": remaining_percent, # This is now the true measured %
-            "test_accuracy": best_acc,
-            "early_stop_epoch": early_stop_epoch
+            "remaining_percent": remaining_percent,
+            "best_val_acc": best_acc,
+            "early_stop_epoch": early_stop_epoch,
+            "final_train_loss": round_results[-1]["train_loss"], # For overfitting analysis
+            "final_val_loss": round_results[-1]["val_loss"]      # For overfitting analysis
         })
 
         # --- TIME ESTIMATION ---
