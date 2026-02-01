@@ -15,12 +15,12 @@ from utils import get_loaders
 
 def reinitialize_model(model):
     """
-    Randomly re-initializes weights for the control group.
-    Matches the 'Random Re-init' dashed lines in Figure 5.
+    Uses Glorot for initializing weights.
     """
     for layer in model.modules():
         if isinstance(layer, (nn.Conv2d, nn.Linear)):
-            nn.init.kaiming_normal_(layer.weight)
+            # Xavier Normal is what's commonly referred to as Glorot
+            nn.init.xavier_normal_(layer.weight)
             if layer.bias is not None:
                 nn.init.constant_(layer.bias, 0)
 
@@ -31,6 +31,9 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
     
     # 1. Setup Model and capture Initial State (Theta_0)
     model = model_class(use_dropout=use_dropout).to(device)
+
+    reinitialize_model(model)
+
     initial_state_dict = copy.deepcopy(model.state_dict())
     
     # Initialize mask as all ones (100% weights remaining)
@@ -91,13 +94,14 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
         
         results.append({
             "model": model_name,
+            "dropout": use_dropout,  # Ensure this is here!
             "type": experiment_type,
             "round": round_idx,
             "remaining_percent": remaining_percent,
             "best_val_acc": best_acc,
             "early_stop_epoch": early_stop_epoch,
-            "final_train_loss": round_results[-1]["train_loss"], # For overfitting analysis
-            "final_val_loss": round_results[-1]["val_loss"]      # For overfitting analysis
+            "final_train_loss": round_results[-1]["train_loss"],
+            "final_val_loss": round_results[-1]["val_loss"]
         })
 
         # --- TIME ESTIMATION ---
