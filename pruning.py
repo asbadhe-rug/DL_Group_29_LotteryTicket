@@ -2,16 +2,7 @@ import torch
 
 def get_mask_layerwise(model, prune_percent_conv, prune_percent_fc):
     """
-    LAYER-WISE pruning: Prunes each layer independently at specified rates.
-    Used for Conv-2, Conv-4, Conv-6 (Section 3 of paper).
-    
-    Args:
-        model: The neural network
-        prune_percent_conv: Cumulative percentage to prune from convolutional layers
-        prune_percent_fc: Cumulative percentage to prune from fully-connected layers
-    
-    Returns:
-        Dictionary of masks for each weight tensor
+    Gives a mask for pruning the weights.
     """
     mask = {}
     
@@ -19,15 +10,15 @@ def get_mask_layerwise(model, prune_percent_conv, prune_percent_fc):
         if 'weight' not in name:
             continue
             
-        # Determine if this is a conv or fc layer based on module name
-        if 'features' in name:  # Conv layers are in 'features' module
+        # Determines if this is a conv or fc layer based on name
+        if 'features' in name:  # Conv layers have 'feature' in the name
             prune_percent = prune_percent_conv
-        elif 'classifier' in name:  # FC layers are in 'classifier' module
+        elif 'classifier' in name:  # FC layers have 'classifier' in the name
             prune_percent = prune_percent_fc
         else:
             prune_percent = prune_percent_fc  # Default to FC rate
         
-        # Get threshold for this specific layer
+        # Get threshold weight magnitude for this layer
         weights = param.data.abs().view(-1)
         threshold = torch.quantile(weights, prune_percent)
         mask[name] = (param.data.abs() > threshold).float()
@@ -36,7 +27,7 @@ def get_mask_layerwise(model, prune_percent_conv, prune_percent_fc):
 
 
 def apply_mask(model, mask):
-    """Applies the mask to model parameters (sets pruned weights to zero)."""
+    """Applies the mask to prune unwanted weights."""
     for name, param in model.named_parameters():
         if name in mask:
             param.data.mul_(mask[name])
