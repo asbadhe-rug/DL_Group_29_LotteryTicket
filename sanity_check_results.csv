@@ -1,0 +1,4 @@
+model,dropout,type,round,sparsity,remaining_percent,test_accuracy
+Conv2,False,winning_ticket,0,0.0,100.0,67.14
+Conv2,False,winning_ticket,1,19.910313713673503,80.0896862863265,68.18
+Conv2,False,winning_ticket,2,35.84749750755175,64.15250249244825,65.92
