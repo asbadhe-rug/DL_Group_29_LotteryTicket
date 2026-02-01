@@ -69,7 +69,7 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
             
             # Track early stopping (Paper uses "minimum validation loss" or "early stop epoch")
-            if val_acc > 75.0 and early_stop_epoch == epochs:
+            if val_acc > 70.0 and early_stop_epoch == epochs:
                 early_stop_epoch = epoch
                 
             if val_acc > best_acc:
@@ -126,18 +126,21 @@ if __name__ == "__main__":
     configs = [
         ("Conv2", Conv2, False), 
         ("Conv4", Conv4, False),
-        ("Conv2", Conv2, True)  # Includes Dropout analysis for Fig 6
+        ("Conv2", Conv2, True),
+        ("Conv6", Conv6, False)
     ]
     
     types = ["winning_ticket", "random_reinit"]
 
     for m_name, m_class, d_out in configs:
         for t in types:
+            if m_name == "Conv2" and t == "winning_ticket":
+                continue
             data = run_experiment(m_name, m_class, d_out, t, iterations=15, epochs=25)
             all_data.extend(data)
             
             # Save progress so you don't lose data if it crashes
-            pd.DataFrame(all_data).to_csv("imp_results_backup.csv", index=False)
+            pd.DataFrame(all_data).to_csv("imp_results_backup2.csv", index=False)
 
     # Final Save
     final_df = pd.DataFrame(all_data)
