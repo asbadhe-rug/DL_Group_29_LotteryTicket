@@ -3,20 +3,20 @@ import torch.nn as nn
 
 #creates a 2D convolutional model
 class Conv2(nn.Module):
-    def __init__(self, use_dropout=False):
-        super(Conv2, self).__init__() #properly initialized all the pytorch thingies 
+    def __init__(self, with_dropout=False):
+        super(Conv2, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(3, 64, 3, padding=1), nn.ReLU(), #2D convolutional layer with 3 channels, 64 output channels, and a 3x3 kernal, with padding 1 and ReLU activation
-            nn.Conv2d(64, 64, 3, padding=1), nn.ReLU(), #2D convolutional layer with 64 channels, 64 output channels, and a 3x3 kernal, with padding 1 and ReLU activation
-            nn.MaxPool2d(2, 2) #2D max pooling 2x2 with stride 2
+            nn.Conv2d(3, 64, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(64, 64, 3, padding=1), nn.ReLU(), 
+            nn.MaxPool2d(2, 2)
         )
         
         # Classifier layers
-        layers = [nn.Linear(64 * 16 * 16, 256), nn.ReLU()] #linear layer with input 64*16*16 and output 256
-        if use_dropout: layers.append(nn.Dropout(0.5)) #add dropout 
+        layers = [nn.Linear(64 * 16 * 16, 256), nn.ReLU()] 
+        if with_dropout: layers.append(nn.Dropout(0.5)) #add dropout 
         
-        layers.extend([nn.Linear(256, 256), nn.ReLU()]) #linear layer with input 256 and output 256
-        if use_dropout: layers.append(nn.Dropout(0.5)) #add dropout
+        layers.extend([nn.Linear(256, 256), nn.ReLU()]) 
+        if with_dropout: layers.append(nn.Dropout(0.5)) #add dropout
         
         layers.append(nn.Linear(256, 10)) #add final linear layer with input 256 and output 10, as CIFAR10 has 10 classes.
         
@@ -33,7 +33,7 @@ class Conv2(nn.Module):
 
 #creates a 2D convolutial model like Conv2 but with extra convolutional layers 
 class Conv4(nn.Module):
-    def __init__(self, use_dropout=False):
+    def __init__(self, with_dropout=False):
         super(Conv4, self).__init__()
 
         self.features = nn.Sequential(
@@ -47,10 +47,10 @@ class Conv4(nn.Module):
         )
         
         layers = [nn.Linear(128 * 8 * 8, 256), nn.ReLU()]
-        if use_dropout: layers.append(nn.Dropout(0.5))
+        if with_dropout: layers.append(nn.Dropout(0.5))
         
         layers.extend([nn.Linear(256, 256), nn.ReLU()])
-        if use_dropout: layers.append(nn.Dropout(0.5))
+        if with_dropout: layers.append(nn.Dropout(0.5))
         
         layers.append(nn.Linear(256, 10))
         
@@ -63,9 +63,9 @@ class Conv4(nn.Module):
 
 #creates a 2D convolutial model like Conv4 but with extra convolutional layers
 class Conv6(nn.Module):
-    def __init__(self, use_dropout=False):
+    def __init__(self, with_dropout=False):
         super(Conv6, self).__init__()
-        # Architecture: [64, 64, M] -> [128, 128, M] -> [256, 256, M]
+    
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, 3, padding=1), nn.ReLU(),
             nn.Conv2d(64, 64, 3, padding=1), nn.ReLU(),
@@ -81,10 +81,10 @@ class Conv6(nn.Module):
         )
         
         layers = [nn.Linear(256 * 4 * 4, 256), nn.ReLU()]
-        if use_dropout: layers.append(nn.Dropout(0.5))
+        if with_dropout: layers.append(nn.Dropout(0.5))
         
         layers.extend([nn.Linear(256, 256), nn.ReLU()])
-        if use_dropout: layers.append(nn.Dropout(0.5))
+        if with_dropout: layers.append(nn.Dropout(0.5))
         
         layers.append(nn.Linear(256, 10))
         

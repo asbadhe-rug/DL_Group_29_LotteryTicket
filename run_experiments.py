@@ -1,4 +1,3 @@
-#Importing all the necessary modules
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -8,7 +7,6 @@ import os
 import time
 from datetime import datetime, timedelta
 
-#importing functions from sub-files 
 from models import Conv2, Conv4, Conv6 
 from pruning import get_mask_layerwise, apply_mask
 from train import train, evaluate
@@ -16,7 +14,7 @@ from utils import get_loaders
 
 def reinitialize_model(model):
     """
-    Randomly re-initializes weights for the control group.
+    re-initializes weights.
     """
     for layer in model.modules():
         if isinstance(layer, (nn.Conv2d, nn.Linear)):
@@ -24,28 +22,28 @@ def reinitialize_model(model):
             if layer.bias is not None:
                 nn.init.constant_(layer.bias, 0)
 
-def run_experiment(model_name, model_class, use_dropout, experiment_type, iterations=15, epochs=25):
+def run_experiment(m_name, m_class, with_dropout, experiment_type, iterations=15, epochs=25):
     # Determine pruning rates based on model
-    if model_name == "Conv2" or model_name == "Conv4":
-        conv_prune_rate = 0.10  # Prune 10% of remaining conv weights per iteration
-        fc_prune_rate = 0.20    # Prune 20% of remaining FC weights per iteration
-    elif model_name == "Conv6":
-        conv_prune_rate = 0.15  # Prune 15% of remaining conv weights per iteration
-        fc_prune_rate = 0.20    # Prune 20% of remaining FC weights per iteration
+    if m_name == "Conv2" or m_name == "Conv4":
+        conv_prune_rate = 0.10  # prune 10% or remaining conv weights
+        fc_prune_rate = 0.20    # prune 20% of remaining FC weights
+    elif m_name == "Conv6":
+        conv_prune_rate = 0.15  # 15% of remaining conv weights
+        fc_prune_rate = 0.20    # 20% of remaining FC weights
     else:
         # Default fallback
         conv_prune_rate = 0.20
         fc_prune_rate = 0.20
     
     # Adjust epochs based on dropout
-    if use_dropout:
+    if with_dropout:
         epochs = epochs * 3 
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #use gpu if its available else cpu
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader, val_loader, test_loader = get_loaders(batch_size=60) # Batch size 60 as per the paper
     
     #Setup Model and save Initial State
-    model = model_class(use_dropout=use_dropout).to(device)
+    model = m_class(with_dropout=with_dropout).to(device)
     initial_state_dict = copy.deepcopy(model.state_dict())
     
     # Initialize mask as all ones
@@ -64,14 +62,13 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
         apply_mask(model, mask) #apply the mask
 
         #choose learning rate based on model and dropout
-        if use_dropout:
-            # With dropout, use higher LR for Conv2, lower LR for Conv4/6
-            if model_name == "Conv2":
+        if with_dropout:
+            if m_name == "Conv2":
                 lr = 0.0003  
             else:  # Conv4 and Conv6
                 lr = 0.0002  
         else:
-            if model_name == "Conv2":
+            if m_name == "Conv2":
                 lr = 0.0002  
             else:  # Conv4 and Conv6
                 lr = 0.0003
@@ -84,7 +81,7 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
         best_state_dict = None  # Save weights at early stop
         
         # 3. Training Loop
-        print(f"\n>>> Running: {model_name} | {experiment_type} | Round {round_idx} (Target: {epochs} Epochs)")
+        print(f"\n>>> Running: {m_name} | {experiment_type} | Round {round_idx} (Target: {epochs} Epochs)")
         
         for epoch in range(1, epochs + 1):
             train_loss = train(model, train_loader, optimizer, criterion, device, mask) #train the model
@@ -122,8 +119,8 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
         
         #create dictionary with all results
         results.append({
-            "model": model_name,
-            "dropout": use_dropout,
+            "model": m_name,
+            "dropout": with_dropout,
             "type": experiment_type,
             "round": round_idx,
             "sparsity": sparsity,
@@ -150,7 +147,7 @@ def run_experiment(model_name, model_class, use_dropout, experiment_type, iterat
             fc_cumulative = 1 - (1 - fc_prune_rate)**(round_idx + 1)
             
             #Create temp model with trained weights to calculate new mask
-            temp_model = model_class(use_dropout=use_dropout).to(device)
+            temp_model = m_class(with_dropout=with_dropout).to(device)
             temp_model.load_state_dict(trained_state_dict)
 
             mask = get_mask_layerwise(temp_model, conv_cumulative, fc_cumulative)
